@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Factura</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body { font-family: Arial; padding: 20px; background:#f5f5f5; }
+.container { background:#fff; padding:20px; border-radius:10px; }
+input { padding:5px; margin:5px; }
+table { width:100%; border-collapse: collapse; margin-top:10px; }
+table, th, td { border:1px solid #ccc; }
+th, td { padding:8px; text-align:center; }
+button { margin:5px; padding:10px; }
+</style>
+</head>
+<body>
+
+<div class="container" id="factura">
+<h2>Factura</h2>
+
+<label>Cliente:</label>
+<input type="text" id="cliente"><br>
+
+<label>Fecha:</label>
+<input type="date" id="fecha"><br>
+
+<table id="tabla">
+<thead>
+<tr>
+<th>Producto</th>
+<th>Cantidad</th>
+<th>Precio</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<button onclick="agregarFila()">Agregar Producto</button>
+
+<h3>Total General: $<span id="totalGeneral">0</span></h3>
+
+<button onclick="generarPDF()">Descargar PDF</button>
+<button onclick="window.print()">Imprimir</button>
+</div>
+
+<script>
+function agregarFila() {
+    let tabla = document.querySelector("#tabla tbody");
+    let fila = document.createElement("tr");
+
+    fila.innerHTML = `
+        <td><input type="text"></td>
+        <td><input type="number" onchange="calcular(this)"></td>
+        <td><input type="number" onchange="calcular(this)"></td>
+        <td class="total">0</td>
+    `;
+
+    tabla.appendChild(fila);
+}
+
+function calcular(input) {
+    let fila = input.parentElement.parentElement;
+    let cantidad = fila.children[1].children[0].value;
+    let precio = fila.children[2].children[0].value;
+    let total = cantidad * precio;
+
+    fila.querySelector(".total").innerText = total || 0;
+    calcularTotal();
+}
+
+function calcularTotal() {
+    let totales = document.querySelectorAll(".total");
+    let suma = 0;
+
+    totales.forEach(td => {
+        suma += parseFloat(td.innerText) || 0;
+    });
+
+    document.getElementById("totalGeneral").innerText = suma;
+}
+
+async function generarPDF() {
+    const { jsPDF } = window.jspdf;
+    let pdf = new jsPDF();
+
+    let factura = document.getElementById("factura");
+    let canvas = await html2canvas(factura);
+    let img = canvas.toDataURL("image/png");
+
+    pdf.addImage(img, 'PNG', 10, 10, 190, 0);
+    pdf.save("factura.pdf");
+}
+</script>
+
+</body>
+</html>
